@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from itertools import groupby
+import operator
 from operator import itemgetter
 import copy
 import sqlite3
@@ -105,11 +106,11 @@ def get_household_load_profile(N_room, N_day,N_night,Ls_App,Cust_Monthly_Cost=0,
 
     Cust_Profile=copy.copy(Matching(Input_List))
     Cust_Profile*=Pred_Ave_KWh                                            #Resulted 24 vector Total consumption
-    Cust_Total_Profile=copy.copy(Cust_Profile)
     if Ls_App[4]==1:                                                    #Adding Swimming Pump Consumption
         Cust_Profile+=1.12
     if Ls_App[5]==1:                                                    #Adding HVAC Consumption
         Cust_Profile+=0.356
+    Cust_Total_Profile=copy.copy(Cust_Profile)
 
     #Calculating Baseline and Deferred Loading
     '''
@@ -128,17 +129,9 @@ def get_household_load_profile(N_room, N_day,N_night,Ls_App,Cust_Monthly_Cost=0,
 
     #Find possible hours' index of the duration in the deferred loading
     def Baseline(lst, num):
-        return [i for i, x in enumerate(lst) if x>=num ]
-    #Find the time interval of the deferred load
-    def Def_Load_Time(lst):
-        for k, g in groupby(enumerate(lst), lambda (i, x): i-x):
-            group=(map(itemgetter(1), g))
-            if len(group)>1:
-                Peak_Hour=filter(lambda x:x>=15 and x<=21,group)           #filter off-peak Hour; Assume 15:00-21:00 is Peak Hour
-                if len(Peak_Hour)>1:
-                    group=Peak_Hour
-                if len(group)>0:
-                    return group[0:4]
+	result=[i for i, x in enumerate(lst) if x>=num ]
+	result=filter(lambda x:x>=15*4 and x<=21*4,result)						#filter off-peak Hour; Assume 15:00-21:00 is Peak Hour
+	return result
     #find the possible deferred load time interval that in the peak profile 
 	def Def_Load_Interval(lst,Profile):
 		Time_Interval=[]
@@ -150,8 +143,7 @@ def get_household_load_profile(N_room, N_day,N_night,Ls_App,Cust_Monthly_Cost=0,
 			Time_Interval.append(index+2)
 			Time_Interval.append(index+3)
 		return Time_Interval
-
-
+		
     #Generate three vectors for each deferred load and the resulted baseline profile
     '''
         Paras:
