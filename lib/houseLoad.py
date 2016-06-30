@@ -139,6 +139,17 @@ def get_household_load_profile(N_room, N_day,N_night,Ls_App,Cust_Monthly_Cost=0,
                     group=Peak_Hour
                 if len(group)>0:
                     return group[0:4]
+    #find the possible deferred load time interval that in the peak profile 
+	def Def_Load_Interval(lst,Profile):
+		Time_Interval=[]
+		index, value = max(enumerate(Profile[60:85]), key=operator.itemgetter(1))
+		index+=60																#Index Shifting
+		if index in lst:
+			Time_Interval.append(index)
+			Time_Interval.append(index+1)
+			Time_Interval.append(index+2)
+			Time_Interval.append(index+3)
+		return Time_Interval
 
 
     #Generate three vectors for each deferred load and the resulted baseline profile
@@ -163,11 +174,13 @@ def get_household_load_profile(N_room, N_day,N_night,Ls_App,Cust_Monthly_Cost=0,
     for Def_Item in Def_Load_Index:
         Def_Loading=Cust_Def['Average Daily Consumption(KWh)'][Def_Item]
         Def_Duration=Baseline(Cust_Profile,Def_Loading)
-        Def_Duration=Def_Load_Time(Def_Duration)
+        Def_Duration=Def_Load_Interval(Def_Duration)
         if Def_Duration !=None:
             if len(Def_Duration)>1:
                 Deferred_Matrix[(Def_Item-1,Def_Duration[0])]=Def_Loading
                 Deferred_Matrix[(Def_Item-1,Def_Duration[1])]=Def_Loading        #Resulted Deferred Loading Plot
+                Deferred_Matrix[(Def_Item-1,Def_Duration[2])]=Def_Loading
+                Deferred_Matrix[(Def_Item-1,Def_Duration[3])]=Def_Loading 
         Cust_Profile-=Deferred_Matrix[Def_Item-1]
 
     return {
